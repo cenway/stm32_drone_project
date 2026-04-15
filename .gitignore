@@ -1,0 +1,9 @@
+# 빌드 산출물
+Debug/
+Release/
+
+# IDE 임시 파일
+*.o
+*.d
+*.lst
+*.map
