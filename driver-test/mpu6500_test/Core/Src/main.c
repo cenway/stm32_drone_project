@@ -25,7 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "driver_mpu6500.h"
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -35,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CALIB_MPU6500 1000
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -106,14 +107,8 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
-  mpu6500_init();
-  mpu6500_calibrate(CALIB_MPU6500);
 
   HAL_TIM_Base_Start_IT(&htim11);
-
-  int r = 0;
-  int p = 0;
-  int y = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -122,31 +117,16 @@ int main(void)
   {
 	  if(time_flag_1ms)
 	  {
-		  if(hi2c1.State == HAL_I2C_STATE_READY)
-			  mpu6500_read_data_IT();
 		  time_flag_1ms = 0;
 	  }
 
-	  if(mpu6500_data_received)
-	  {
-
-		  mpu6500_data_received = 0;
-	  }
 
 	  if(time_flag_100ms)
 	  {
-		  const mpu6500_euler_t *euler = mpu6500_get_euler();
-		  r = (int)(euler->roll*100);
-		  p = (int)(euler->pitch*100);
-		  y = (int)(euler->yaw*100);
 
-		  char buf[80];
-		  sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d\r\n",
-				  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100));
-		  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
-
-		  time_flag_100ms = 0;
+	    time_flag_100ms = 0;
 	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -354,9 +334,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	mpu6500_data_received = 1;
-	mpu6500_parse();
-			  mpu6500_update();
-
 }
 
 /* USER CODE END 4 */

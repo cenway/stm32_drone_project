@@ -105,15 +105,15 @@ void mpu6500_calibrate(int samples)
 void mpu6500_complementary_filter(float dt)
 {
     // 가속도계로 각도 계산 (라디안 → 도)
-    float accel_roll  = atan2f(accel.y, accel.z) * 57.2958f;
-    float accel_pitch = atan2f(-accel.x, sqrtf(accel.y * accel.y + accel.z * accel.z)) * 57.2958f;
+    float accel_roll  = atan2f(acc_cnv.y, acc_cnv.z) * 57.2958f;
+    float accel_pitch = atan2f(-acc_cnv.x, sqrtf(acc_cnv.y * acc_cnv.y + acc_cnv.z * acc_cnv.z)) * 57.2958f;
 
     // 상보필터 적용
-    euler.roll  = COMP_ALPHA * (euler.roll  + gyro.x * dt) + (1.0f - COMP_ALPHA) * accel_roll;
-    euler.pitch = COMP_ALPHA * (euler.pitch + gyro.y * dt) + (1.0f - COMP_ALPHA) * accel_pitch;
+    euler.roll  = COMP_ALPHA * (euler.roll  + gyr_cnv.x * dt) + (1.0f - COMP_ALPHA) * accel_roll;
+    euler.pitch = COMP_ALPHA * (euler.pitch + gyr_cnv.y * dt) + (1.0f - COMP_ALPHA) * accel_pitch;
 
     // yaw는 자이로 적분만 (지자기 센서 없음)
-    euler.yaw += gyro.z * dt;
+    euler.yaw += gyr_cnv.z * dt;
 }
 
 //if you read data by IT, add mpu6500_parse() before update.

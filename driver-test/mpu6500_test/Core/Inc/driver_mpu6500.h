@@ -5,6 +5,40 @@
  *      Author: yhj02
  */
 
+//#include "driver_mpu6500.h"
+//#define CALIB_MPU6500 1000
+//
+//mpu6500_init();
+//mpu6500_calibrate(CALIB_MPU6500);
+//if(time_flag_1ms)
+//{
+//  if(hi2c1.State == HAL_I2C_STATE_READY)
+//	  mpu6500_read_data_IT();
+//  time_flag_1ms = 0;
+//}
+//
+//if(mpu6500_data_received)
+//{
+//  mpu6500_parse();
+//  mpu6500_update();
+//  mpu6500_data_received = 0;
+//}
+//
+//if(time_flag_100ms)
+//{
+//  const mpu6500_euler_t *euler = mpu6500_get_euler();
+//  int r = (int)(euler->roll*100);
+//  int p = (int)(euler->pitch*100);
+//  int y = (int)(euler->yaw*100);
+//
+//  char buf[80];
+//  sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d\r\n",
+//		  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100));
+//  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+//
+//  time_flag_100ms = 0;
+//}
+
 #ifndef INC_DRIVER_MPU6500_H_
 #define INC_DRIVER_MPU6500_H_
 

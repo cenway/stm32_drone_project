@@ -7,3 +7,13 @@ Release/
 *.d
 *.lst
 *.map
+
+# CubeIDE/Eclipse Metadata
+.metadata/
+.settings/
+.project
+.cproject
+.mxproject
+
+# 로컬 유저 설정
+*.launch
