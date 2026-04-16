@@ -36,28 +36,19 @@ typedef struct
     float yaw;
 } mpu6500_euler_t;
 
-typedef struct
-{
-    mpu6500_t accel;
-    mpu6500_t gyro;
-    mpu6500_conv_t acc_cnv;
-    mpu6500_conv_t gyr_cnv;
-    mpu6500_conv_t gyr_offset;
-    mpu6500_euler_t euler;
-} mpu6500_data_t;
-
+const mpu6500_euler_t *mpu6500_get_euler(void);
 
 void mpu6500_write(uint16_t memaddr, uint8_t * write_data, uint16_t size);
 void mpu6500_read(uint16_t memaddr, uint8_t * read_data, uint16_t size);
 void mpu6500_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size);
-void mpu6500_read_data(mpu6500_t *accel, mpu6500_t *gyro);
-void mpu6500_read_data_IT(uint8_t * buf);
-void mpu6500_conv_data(mpu6500_t *accel, mpu6500_t *gyro,
-		mpu6500_conv_t *acc_cnv, mpu6500_conv_t *gyr_cnv, mpu6500_conv_t *gyr_offset);
-void mpu6500_complementary_filter(mpu6500_conv_t *accel, mpu6500_conv_t *gyro,
-                                   mpu6500_euler_t *euler, float dt);
+void mpu6500_parse(void);
+void mpu6500_read_data(void);
+void mpu6500_read_data_IT(void);
+void mpu6500_conv_data(void);
+void mpu6500_calibrate(int samples);
+void mpu6500_complementary_filter(float dt);
 void mpu6500_update(void);
-void mpu6500_calibrate(mpu6500_conv_t *gyro_offset, int samples);
+
 void mpu6500_init(void);
 
 #endif /* INC_DRIVER_MPU6500_H_ */

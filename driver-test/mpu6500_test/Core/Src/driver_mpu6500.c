@@ -9,11 +9,20 @@
 #include <math.h>
 
 #define COMP_ALPHA 0.98f
+#define DATA_REG 0x3B
+#define UPDATE_SEC 0.001f
 
 
-I2C_HandleTypeDef hi2c1;
+static mpu6500_t accel;
+static mpu6500_t gyro;
+static mpu6500_conv_t acc_cnv;
+static mpu6500_conv_t gyr_cnv;
+static mpu6500_conv_t gyr_offset;
+static mpu6500_euler_t euler;
 
+static uint8_t mpu6500_buf[14];
 
+const mpu6500_euler_t *mpu6500_get_euler(void){	return &euler; }
 
 void mpu6500_write(uint16_t memaddr, uint8_t * write_data, uint16_t size)
 {
@@ -30,84 +39,88 @@ void mpu6500_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size)
 	HAL_I2C_Mem_Read_IT(&hi2c1, MPU6500_ADDR, memaddr, 1, read_data, size);
 }
 
-
-// 가속도(6) + 온도(2, 스킵용) + 자이로(6) = 14바이트 연속 읽기
-void mpu6500_read_data(mpu6500_t *accel, mpu6500_t *gyro)
+void mpu6500_parse(void)
 {
-    uint8_t buf[14];
+	// 가속도 XYZ (0x3B ~ 0x40)
+	accel.x = (int16_t)(mpu6500_buf[0] << 8 | mpu6500_buf[1]);
+	accel.y = (int16_t)(mpu6500_buf[2] << 8 | mpu6500_buf[3]);
+	accel.z = (int16_t)(mpu6500_buf[4] << 8 | mpu6500_buf[5]);
 
-    mpu6500_read(0x3B, buf, 14);
+	// buf[6], buf[7]은 온도 → 스킵
 
-    // 가속도 XYZ (0x3B ~ 0x40)
-    accel->x = (int16_t)(buf[0] << 8 | buf[1]);
-    accel->y = (int16_t)(buf[2] << 8 | buf[3]);
-    accel->z = (int16_t)(buf[4] << 8 | buf[5]);
-
-    // buf[6], buf[7]은 온도 → 스킵
-
-    // 자이로 XYZ (0x43 ~ 0x48)
-    gyro->x = (int16_t)(buf[8]  << 8 | buf[9]);
-    gyro->y = (int16_t)(buf[10] << 8 | buf[11]);
-    gyro->z = (int16_t)(buf[12] << 8 | buf[13]);
+	// 자이로 XYZ (0x43 ~ 0x48)
+	gyro.x = (int16_t)(mpu6500_buf[8]  << 8 | mpu6500_buf[9]);
+	gyro.y = (int16_t)(mpu6500_buf[10] << 8 | mpu6500_buf[11]);
+	gyro.z = (int16_t)(mpu6500_buf[12] << 8 | mpu6500_buf[13]);
 }
 
-void mpu6500_read_data_IT(uint8_t * buf)
+// 가속도(6) + 온도(2, 스킵용) + 자이로(6) = 14바이트 연속 읽기
+void mpu6500_read_data(void)
 {
-    mpu6500_read_IT(0x3B, buf, 14);
+    mpu6500_read(DATA_REG, mpu6500_buf, 14);
+    mpu6500_parse();
+}
+
+void mpu6500_read_data_IT(void)
+{
+    mpu6500_read_IT(DATA_REG, mpu6500_buf, 14);
 }
 
 
 // ±16g  → 2048 LSB/g   → raw / 2048.0 = g단위
 // ±2000dps → 16.4 LSB/(°/s) → raw / 16.4 = °/s단위
-void mpu6500_conv_data(mpu6500_t *accel, mpu6500_t *gyro,
-		mpu6500_conv_t *acc_cnv, mpu6500_conv_t *gyr_cnv, mpu6500_conv_t *gyr_offset)
+void mpu6500_conv_data(void)
 {
-    acc_cnv->x = accel->x / 2048.0f;
-    acc_cnv->y = accel->y / 2048.0f;
-    acc_cnv->z = accel->z / 2048.0f;
+    acc_cnv.x = accel.x / 2048.0f;
+    acc_cnv.y = accel.y / 2048.0f;
+    acc_cnv.z = accel.z / 2048.0f;
 
-    gyr_cnv->x = gyro->x / 16.4f - gyr_offset->x;
-    gyr_cnv->y = gyro->y / 16.4f - gyr_offset->y;
-    gyr_cnv->z = gyro->z / 16.4f - gyr_offset->z;
+    gyr_cnv.x = gyro.x / 16.4f - gyr_offset.x;
+    gyr_cnv.y = gyro.y / 16.4f - gyr_offset.y;
+    gyr_cnv.z = gyro.z / 16.4f - gyr_offset.z;
 }
 
-void mpu6500_calibrate(mpu6500_conv_t *gyr_offset, int samples)
+void mpu6500_calibrate(int samples)
 {
-    mpu6500_t accel, gyro;
-
-    gyr_offset->x = 0;
-    gyr_offset->y = 0;
-    gyr_offset->z = 0;
+	gyr_offset.x = 0;
+	gyr_offset.y = 0;
+	gyr_offset.z = 0;
 
     for(int i = 0; i < samples; i++)
     {
-        mpu6500_read_data(&accel, &gyro);
+        mpu6500_read_data();
 
-        gyr_offset->x += gyro.x / 16.4f;
-		gyr_offset->y += gyro.y / 16.4f;
-		gyr_offset->z += gyro.z / 16.4f;
+        gyr_offset.x += gyro.x / 16.4f;
+		gyr_offset.y += gyro.y / 16.4f;
+		gyr_offset.z += gyro.z / 16.4f;
 
         HAL_Delay(2);
     }
 
-    gyr_offset->x /= samples;
-    gyr_offset->y /= samples;
-    gyr_offset->z /= samples;
+    gyr_offset.x /= samples;
+    gyr_offset.y /= samples;
+    gyr_offset.z /= samples;
 }
 
-void mpu6500_complementary_filter(mpu6500_conv_t *accel, mpu6500_conv_t *gyro,
-                                   mpu6500_euler_t *euler, float dt)
+void mpu6500_complementary_filter(float dt)
 {
     // 가속도계로 각도 계산 (라디안 → 도)
-    float accel_roll  = atan2f(accel->y, accel->z) * 57.2958f;
-    float accel_pitch = atan2f(-accel->x, sqrtf(accel->y * accel->y + accel->z * accel->z)) * 57.2958f;
+    float accel_roll  = atan2f(accel.y, accel.z) * 57.2958f;
+    float accel_pitch = atan2f(-accel.x, sqrtf(accel.y * accel.y + accel.z * accel.z)) * 57.2958f;
 
     // 상보필터 적용
-    euler->roll  = COMP_ALPHA * (euler->roll  + gyro->x * dt) + (1.0f - COMP_ALPHA) * accel_roll;
-    euler->pitch = COMP_ALPHA * (euler->pitch + gyro->y * dt) + (1.0f - COMP_ALPHA) * accel_pitch;
+    euler.roll  = COMP_ALPHA * (euler.roll  + gyro.x * dt) + (1.0f - COMP_ALPHA) * accel_roll;
+    euler.pitch = COMP_ALPHA * (euler.pitch + gyro.y * dt) + (1.0f - COMP_ALPHA) * accel_pitch;
 
     // yaw는 자이로 적분만 (지자기 센서 없음)
-    euler->yaw += gyro->z * dt;
+    euler.yaw += gyro.z * dt;
+}
+
+//if you read data by IT, add mpu6500_parse() before update.
+void mpu6500_update(void)
+{
+	mpu6500_conv_data();
+	mpu6500_complementary_filter(UPDATE_SEC);
 }
 
 // MPU6500 초기화
@@ -165,5 +178,6 @@ void mpu6500_init(void)
     // 안정화 대기
     HAL_Delay(100);
 }
+
 
 
