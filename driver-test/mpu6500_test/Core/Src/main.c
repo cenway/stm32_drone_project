@@ -25,7 +25,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "driver_mpu6500.h"
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,23 +47,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 TIM_HandleTypeDef htim11;
-
+I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-static mpu6500_t accel;
-static mpu6500_t gyro;
-static mpu6500_conv_t acc_cnv;
-static mpu6500_conv_t gyr_cnv;
-
-static mpu6500_conv_t gyr_offset;
-static mpu6500_euler_t euler;
-
 volatile static uint8_t time_flag_1ms;
 volatile static uint8_t time_flag_100ms;
+
 volatile static uint8_t mpu6500_data_received;
 
-static uint8_t mpu6500_buf[14];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -114,14 +107,8 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
-  mpu6500_init();
-  mpu6500_calibrate(&gyr_offset, 1000);
 
   HAL_TIM_Base_Start_IT(&htim11);
-
-  int r = 0;
-  int p = 0;
-  int y = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,32 +117,16 @@ int main(void)
   {
 	  if(time_flag_1ms)
 	  {
-		  //if(hi2c1.State == HAL_I2C_STATE_READY)
-		  mpu6500_read_data_IT(mpu6500_buf);
 		  time_flag_1ms = 0;
 	  }
 
-	  if(mpu6500_data_received)
-	  {
-		  mpu6500_conv_data(&accel, &gyro, &acc_cnv, &gyr_cnv, &gyr_offset);
-		  mpu6500_complementary_filter(&acc_cnv, &gyr_cnv, &euler, 0.001);
-
-		  r = (int)(euler.roll * 100);
-		  p = (int)(euler.pitch * 100);
-		  y = (int)(euler.yaw * 100);
-
-		  mpu6500_data_received = 0;
-	  }
 
 	  if(time_flag_100ms)
 	  {
-		  char buf[80];
-		  sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d\r\n",
-				  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100));
-		  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
 
-		  time_flag_100ms = 0;
+	    time_flag_100ms = 0;
 	  }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -363,18 +334,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	mpu6500_data_received = 1;
-
-	// 가속도 XYZ (0x3B ~ 0x40)
-	accel.x = (int16_t)(mpu6500_buf[0] << 8 | mpu6500_buf[1]);
-	accel.y = (int16_t)(mpu6500_buf[2] << 8 | mpu6500_buf[3]);
-	accel.z = (int16_t)(mpu6500_buf[4] << 8 | mpu6500_buf[5]);
-
-	// buf[6], buf[7]은 온도 → 스킵
-
-	// 자이로 XYZ (0x43 ~ 0x48)
-	gyro.x = (int16_t)(mpu6500_buf[8]  << 8 | mpu6500_buf[9]);
-	gyro.y = (int16_t)(mpu6500_buf[10] << 8 | mpu6500_buf[11]);
-	gyro.z = (int16_t)(mpu6500_buf[12] << 8 | mpu6500_buf[13]);
 }
 
 /* USER CODE END 4 */

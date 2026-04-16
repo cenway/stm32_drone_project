@@ -5,6 +5,40 @@
  *      Author: yhj02
  */
 
+//#include "driver_mpu6500.h"
+//#define CALIB_MPU6500 1000
+//
+//mpu6500_init();
+//mpu6500_calibrate(CALIB_MPU6500);
+//if(time_flag_1ms)
+//{
+//  if(hi2c1.State == HAL_I2C_STATE_READY)
+//	  mpu6500_read_data_IT();
+//  time_flag_1ms = 0;
+//}
+//
+//if(mpu6500_data_received)
+//{
+//  mpu6500_parse();
+//  mpu6500_update();
+//  mpu6500_data_received = 0;
+//}
+//
+//if(time_flag_100ms)
+//{
+//  const mpu6500_euler_t *euler = mpu6500_get_euler();
+//  int r = (int)(euler->roll*100);
+//  int p = (int)(euler->pitch*100);
+//  int y = (int)(euler->yaw*100);
+//
+//  char buf[80];
+//  sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d\r\n",
+//		  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100));
+//  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+//
+//  time_flag_100ms = 0;
+//}
+
 #ifndef INC_DRIVER_MPU6500_H_
 #define INC_DRIVER_MPU6500_H_
 
@@ -36,28 +70,19 @@ typedef struct
     float yaw;
 } mpu6500_euler_t;
 
-typedef struct
-{
-    mpu6500_t accel;
-    mpu6500_t gyro;
-    mpu6500_conv_t acc_cnv;
-    mpu6500_conv_t gyr_cnv;
-    mpu6500_conv_t gyr_offset;
-    mpu6500_euler_t euler;
-} mpu6500_data_t;
-
+const mpu6500_euler_t *mpu6500_get_euler(void);
 
 void mpu6500_write(uint16_t memaddr, uint8_t * write_data, uint16_t size);
 void mpu6500_read(uint16_t memaddr, uint8_t * read_data, uint16_t size);
 void mpu6500_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size);
-void mpu6500_read_data(mpu6500_t *accel, mpu6500_t *gyro);
-void mpu6500_read_data_IT(uint8_t * buf);
-void mpu6500_conv_data(mpu6500_t *accel, mpu6500_t *gyro,
-		mpu6500_conv_t *acc_cnv, mpu6500_conv_t *gyr_cnv, mpu6500_conv_t *gyr_offset);
-void mpu6500_complementary_filter(mpu6500_conv_t *accel, mpu6500_conv_t *gyro,
-                                   mpu6500_euler_t *euler, float dt);
+void mpu6500_parse(void);
+void mpu6500_read_data(void);
+void mpu6500_read_data_IT(void);
+void mpu6500_conv_data(void);
+void mpu6500_calibrate(int samples);
+void mpu6500_complementary_filter(float dt);
 void mpu6500_update(void);
-void mpu6500_calibrate(mpu6500_conv_t *gyro_offset, int samples);
+
 void mpu6500_init(void);
 
 #endif /* INC_DRIVER_MPU6500_H_ */
