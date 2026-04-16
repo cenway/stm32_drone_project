@@ -1,0 +1,43 @@
+!SESSION 2026-04-16 18:58:26.077 -----------------------------------------------
+eclipse.buildId=Version 2.0.0
+java.version=21.0.8
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=ko_KR
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-04-16 19:00:19.373
+!MESSAGE Log4j2 initialized with config file D:\stm32_drone_project\driver-test\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-04-16 19:00:24.445
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:00:33.745
+!MESSAGE Executed PowerShell command powershell.exe -Command "Get-CimInstance -ClassName Win32_SerialPort | Select-Object -ExpandProperty DeviceID":
+COM7
+COM6
+
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:00:33.747
+!MESSAGE port: COM7
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:00:33.748
+!MESSAGE port: COM6
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-04-16 19:02:11.741
+!MESSAGE Indexed 'mpu6500_test' (25 sources, 128 headers) in 10.8 sec: 14,606 declarations; 75,567 references; 1 unresolved inclusions; 92 syntax errors; 240 unresolved names (0.27%)
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:53:42.589
+!MESSAGE Executed PowerShell command powershell.exe -Command "Get-CimInstance -ClassName Win32_SerialPort | Select-Object -ExpandProperty DeviceID":
+COM7
+COM6
+COM3
+
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:53:42.590
+!MESSAGE port: COM7
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:53:42.590
+!MESSAGE port: COM6
+
+!ENTRY com.st.stm32cube.ide.mpu.remote.serial 1 1 2026-04-16 19:53:42.591
+!MESSAGE port: COM3
