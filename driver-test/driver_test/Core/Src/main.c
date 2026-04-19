@@ -110,6 +110,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   bmp280_init();
+  bmp280_ground(100);
   HAL_TIM_Base_Start_IT(&htim11);
 
   volatile uint8_t bmp280cnt = 0;
@@ -146,9 +147,10 @@ int main(void)
 
 	  if(time_flag_100ms)
 	  {
-		  const float * P = bmp280_get_press();
-		  char buf[20];
-		  sprintf(buf, "Pa : %.2f\r\n", *P);
+		  const float * al = bmp280_get_altitude();
+		  const float * tmp = bmp280_get_temp();
+		  char buf[50];
+		  sprintf(buf, "%.2f, %.2f\r\n", *al, *tmp);
 		  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
 		  time_flag_100ms = 0;
 	  }

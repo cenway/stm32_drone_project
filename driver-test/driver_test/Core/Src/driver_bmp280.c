@@ -6,11 +6,14 @@
  */
 
 #include "driver_bmp280.h"
+#include <math.h>
 
 #define BMP280_ADDR (0x76 << 1)
 #define BMP280_ID 0xD0
 #define BMP280_DATA 0xF7
 
+static float altitude;
+static float press_gnd;
 static float temp;
 static float press;
 static uint32_t temp_raw;
@@ -19,6 +22,17 @@ static uint8_t bmp280_buf[6];
 static bmp280_calib_t bmp280_calib;
 
 static int32_t t_fine;
+
+const float * bmp280_get_temp(void)
+{
+	return &temp;
+}
+
+const float * bmp280_get_altitude(void)
+{
+	return &altitude;
+}
+
 
 const float * bmp280_get_press(void)
 {
@@ -39,6 +53,11 @@ void bmp280_read(uint16_t memaddr, uint8_t * read_data, uint16_t size)
 void bmp280_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size)
 {
 	HAL_I2C_Mem_Read_IT(&hi2c1, BMP280_ADDR, memaddr, 1, read_data, size);
+}
+
+void bmp280_read_data(void)
+{
+    bmp280_read(BMP280_DATA, bmp280_buf, 6);
 }
 
 void bmp280_read_data_IT(void)
@@ -125,11 +144,38 @@ void bmp280_compensate_P_int64(int32_t adc_P, const bmp280_calib_t *calib)
     press = (float)p/256.0f;
 }
 
+//call after init
+void bmp280_ground(int samples)
+{
+	press_gnd = 0.0f;
+
+	// 첫 20샘플은 버림 (안전장치)
+	for(int i = 0; i < 20; i++) {
+		bmp280_read_data();
+		bmp280_update();
+		HAL_Delay(40);
+	}
+
+
+	for(int i = 0; i < samples; i++)
+	{
+		bmp280_read_data();
+		bmp280_update();
+		press_gnd += press;
+		HAL_Delay(40);
+	}
+	press_gnd /= samples;
+}
+
 void bmp280_update(void)
 {
 	bmp280_parse();
 	bmp280_compensate_T_int32(temp_raw, &bmp280_calib);
 	bmp280_compensate_P_int64(press_raw, &bmp280_calib);
+	if(press_gnd != 0.0f)
+		altitude = 44330.0f * (1.0f - powf(press / press_gnd, 0.1903f));
+	else
+		altitude = -1.0f;
 }
 
 
@@ -153,5 +199,6 @@ void bmp280_init(void)
 	//ctrl : Oversampling_t(x2), Oversampling_t(x16), mode(normal)
 	data = 0x57; //0b010_101_11
 	bmp280_write(0xF4, &data, 1);
-	HAL_Delay(10);
+
+	HAL_Delay(1000);
 }

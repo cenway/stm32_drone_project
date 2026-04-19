@@ -14,6 +14,8 @@ Release/
 .project
 .cproject
 .mxproject
+.log
+.history/
 
 # 로컬 유저 설정
 *.launch

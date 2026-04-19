@@ -28,15 +28,18 @@ typedef struct {
     int16_t  dig_P9;
 } bmp280_calib_t;
 
-
+const float * bmp280_get_temp(void);
+const float * bmp280_get_altitude(void);
 const float * bmp280_get_press(void);
 void bmp280_write(uint16_t memaddr, uint8_t * write_data, uint16_t size);
 void bmp280_read(uint16_t memaddr, uint8_t * read_data, uint16_t size);
 void bmp280_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size);
+void bmp280_read_data(void);
 void bmp280_read_data_IT(void);
 void bmp280_parse(void);
 void bmp280_compensate_T_int32(int32_t adc_T, const bmp280_calib_t *calib);
 void bmp280_compensate_P_int64(int32_t adc_P, const bmp280_calib_t *calib);
+void bmp280_ground(int samples);
 void bmp280_update(void);
 void bmp280_init(void);
 #endif /* INC_DRIVER_BMP280_H_ */
