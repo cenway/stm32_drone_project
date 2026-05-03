@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "driver_bmp280.h"
-
+#include "driver_mpu6500.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,7 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define CALIB_MPU6500 1000
+#define CALIB_BMP280 100
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -109,8 +110,10 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
+  mpu6500_init();
+  mpu6500_calibrate(CALIB_MPU6500);
   bmp280_init();
-  bmp280_ground(100);
+  bmp280_ground(CALIB_BMP280);
   HAL_TIM_Base_Start_IT(&htim11);
 
   volatile uint8_t bmp280cnt = 0;
@@ -123,36 +126,28 @@ int main(void)
   {
 	  if(time_flag_1ms)
 	  {
-		  time_flag_1ms = 0;
-	  }
-
-	  if(time_flag_10ms)
-	  {
-		  bmp280cnt++;
-		  if(bmp280cnt >= 4)
-		  {
-			  bmp280_read_data_IT();
-			  bmp280cnt = 0;
-		  }
-
-		  time_flag_10ms = 0;
-	  }
-
-	  if(bmp280_data_received)
-	  {
+		  mpu6500_read_data();
+		  mpu6500_update();
+		  bmp280_read_data();
 		  bmp280_update();
 
-		  bmp280_data_received = 0;
+		  time_flag_1ms = 0;
 	  }
 
 	  if(time_flag_100ms)
 	  {
-		  const float * al = bmp280_get_altitude();
-		  const float * tmp = bmp280_get_temp();
-		  char buf[50];
-		  sprintf(buf, "%.2f, %.2f\r\n", *al, *tmp);
-		  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
-		  time_flag_100ms = 0;
+			const mpu6500_euler_t *euler = mpu6500_get_euler();
+			const float * al = bmp280_get_altitude();
+			int r = (int)(euler->roll*100);
+			int p = (int)(euler->pitch*100);
+			int y = (int)(euler->yaw*100);
+
+			char buf[100];
+			sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d ,%.2f\r\n",
+				  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100), *al);
+			HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+
+			time_flag_100ms = 0;
 	  }
 
     /* USER CODE END WHILE */

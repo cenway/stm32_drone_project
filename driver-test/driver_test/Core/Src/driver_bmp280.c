@@ -42,12 +42,12 @@ const float * bmp280_get_press(void)
 
 void bmp280_write(uint16_t memaddr, uint8_t * write_data, uint16_t size)
 {
-	HAL_I2C_Mem_Write(&hi2c1, BMP280_ADDR, memaddr, 1, write_data, size, 100);
+	HAL_I2C_Mem_Write(&hi2c1, BMP280_ADDR, memaddr, 1, write_data, size, 10);
 }
 
 void bmp280_read(uint16_t memaddr, uint8_t * read_data, uint16_t size)
 {
-	HAL_I2C_Mem_Read(&hi2c1, BMP280_ADDR, memaddr, 1, read_data, size, 100);
+	HAL_I2C_Mem_Read(&hi2c1, BMP280_ADDR, memaddr, 1, read_data, size, 10);
 }
 
 void bmp280_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size)

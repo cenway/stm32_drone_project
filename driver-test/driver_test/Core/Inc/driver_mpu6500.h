@@ -19,7 +19,6 @@
 //
 //if(mpu6500_data_received)
 //{
-//  mpu6500_parse();
 //  mpu6500_update();
 //  mpu6500_data_received = 0;
 //}
@@ -67,7 +66,9 @@ typedef struct
     float yaw;
 } mpu6500_euler_t;
 
+const mpu6500_conv_t *mpu6500_get_accel(void);
 const mpu6500_euler_t *mpu6500_get_euler(void);
+const mpu6500_conv_t *mpu6500_get_gyr_offset(void);
 
 void mpu6500_write(uint16_t memaddr, uint8_t * write_data, uint16_t size);
 void mpu6500_read(uint16_t memaddr, uint8_t * read_data, uint16_t size);

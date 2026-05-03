@@ -25,16 +25,20 @@ static mpu6500_euler_t euler;
 
 static uint8_t mpu6500_buf[14];
 
+const mpu6500_conv_t *mpu6500_get_accel(void) { return &acc_cnv; }
+
+const mpu6500_conv_t *mpu6500_get_gyr_offset(void) { return &gyr_offset; }
+
 const mpu6500_euler_t *mpu6500_get_euler(void){	return &euler; }
 
 void mpu6500_write(uint16_t memaddr, uint8_t * write_data, uint16_t size)
 {
-	HAL_I2C_Mem_Write(&hi2c1, MPU6500_ADDR, memaddr, 1, write_data, size, 100);
+	HAL_I2C_Mem_Write(&hi2c1, MPU6500_ADDR, memaddr, 1, write_data, size, 10);
 }
 
 void mpu6500_read(uint16_t memaddr, uint8_t * read_data, uint16_t size)
 {
-	HAL_I2C_Mem_Read(&hi2c1, MPU6500_ADDR, memaddr, 1, read_data, size, 100);
+	HAL_I2C_Mem_Read(&hi2c1, MPU6500_ADDR, memaddr, 1, read_data, size, 10);
 }
 
 void mpu6500_read_IT(uint16_t memaddr, uint8_t * read_data, uint16_t size)
@@ -61,7 +65,6 @@ void mpu6500_parse(void)
 void mpu6500_read_data(void)
 {
     mpu6500_read(MPU6500_DATA, mpu6500_buf, 14);
-    mpu6500_parse();
 }
 
 void mpu6500_read_data_IT(void)
@@ -92,7 +95,7 @@ void mpu6500_calibrate(int samples)
     for(int i = 0; i < samples; i++)
     {
         mpu6500_read_data();
-
+        mpu6500_parse();
         gyr_offset.x += gyro.x / 16.4f;
 		gyr_offset.y += gyro.y / 16.4f;
 		gyr_offset.z += gyro.z / 16.4f;
@@ -119,9 +122,10 @@ void mpu6500_complementary_filter(float dt)
     euler.yaw += gyr_cnv.z * dt;
 }
 
-//if you read data by IT, add mpu6500_parse() before update.
+
 void mpu6500_update(void)
 {
+	mpu6500_parse();
 	mpu6500_conv_data();
 	mpu6500_complementary_filter(UPDATE_SEC);
 }

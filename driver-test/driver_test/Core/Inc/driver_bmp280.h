@@ -5,6 +5,42 @@
  *      Author: yhj02
  */
 
+//#include "driver_bmp280.h"
+//volatile static uint8_t bmp280_data_received;
+//
+//#define CALIB_BMP280 100
+//
+//bmp280_init();
+//bmp280_ground(CALIB_BMP280);
+//
+//if(time_flag_10ms)
+//{
+//	bmp280cnt++;
+//	if(bmp280cnt >= 4)
+//	{
+//	  bmp280_read_data_IT();
+//	  bmp280cnt = 0;
+//	}
+//
+//	time_flag_10ms = 0;
+//}
+//
+//if(bmp280_data_received)
+//{
+//	bmp280_update();
+//
+//	bmp280_data_received = 0;
+//}
+//
+//if(time_flag_100ms)
+//{
+//	const float * al = bmp280_get_altitude();
+//	char buf[50];
+//	sprintf(buf, "%.2f\r\n", *al);
+//	HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+//	time_flag_100ms = 0;
+//}
+
 #ifndef INC_DRIVER_BMP280_H_
 #define INC_DRIVER_BMP280_H_
 
