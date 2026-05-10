@@ -27,6 +27,7 @@
 
 #include "driver_bmp280.h"
 #include "driver_mpu6500.h"
+#include "driver_vl53l0x.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,6 +59,8 @@ volatile static uint8_t time_flag_100ms;
 
 volatile static uint8_t mpu6500_data_received;
 volatile static uint8_t bmp280_data_received;
+
+
 
 /* USER CODE END PV */
 
@@ -110,45 +113,33 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
-  mpu6500_init();
-  mpu6500_calibrate(CALIB_MPU6500);
-  bmp280_init();
-  bmp280_ground(CALIB_BMP280);
+  vl53l0x_init();
+  vl53l0x_start();
+
   HAL_TIM_Base_Start_IT(&htim11);
-
-  volatile uint8_t bmp280cnt = 0;
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  VL53L0X_RangingMeasurementData_t rangingData;
+
   while (1)
   {
-	  if(time_flag_1ms)
+	  char buf[100];
+	  uint8_t dataReady = 0;
+	  vl53l0x_ready(&dataReady);
+
+	  if (dataReady)
 	  {
-		  mpu6500_read_data();
-		  mpu6500_update();
-		  bmp280_read_data();
-		  bmp280_update();
+		  vl53l0x_range(&rangingData);
 
-		  time_flag_1ms = 0;
+		  sprintf(buf, "%d mm (status=%d)\r\n",
+				  rangingData.RangeMilliMeter,
+				  rangingData.RangeStatus);
+		  HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
+
 	  }
-
-	  if(time_flag_100ms)
-	  {
-			const mpu6500_euler_t *euler = mpu6500_get_euler();
-			const float * al = bmp280_get_altitude();
-			int r = (int)(euler->roll*100);
-			int p = (int)(euler->pitch*100);
-			int y = (int)(euler->yaw*100);
-
-			char buf[100];
-			sprintf(buf, "%d.%.2d ,%d.%.2d ,%d.%.2d ,%.2f\r\n",
-				  r/100, abs(r%100), p/100, abs(p%100), y/100, abs(y%100), *al);
-			HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), 100);
-
-			time_flag_100ms = 0;
-	  }
+	  HAL_Delay(100);
 
     /* USER CODE END WHILE */
 
